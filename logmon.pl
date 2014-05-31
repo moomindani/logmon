@@ -73,7 +73,7 @@ my $check_config = $_[ 0 ];
 }
 
 sub watch_for {
-my ( $tail_num, $target, $message, $action, $new_action );
+my ( $tail_num, $target, $message, $action, $new_action, $line );
 
     ( $target, $tail_num ) = @_;
     unless ( fork() ) {      # Child
@@ -84,8 +84,10 @@ my ( $tail_num, $target, $message, $action, $new_action );
             foreach $message ( keys %{$Config{$target}} ) {
                 if ( $_ =~ m/$message/ ) {
                     foreach $action ( @{$Config{ $target }->{ $message }} ) {
+                        $line = $_;
+                        $line =~ s/\"/\\\"/g;
                         $new_action = $action;
-                        $new_action =~ s/<%%%%>/$_/g;
+                        $new_action =~ s/<%%%%>/$line/g;
                         system( $new_action );
                     }
                 }
