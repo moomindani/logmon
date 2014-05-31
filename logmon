@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# chkconfig: 345 13 13 
+# description: Log Monitor
+# processname: logmon
+
+LOGMON_CONF=/etc/logmon/logmon.conf
+LOGMON_BIN=/etc/logmon/logmon.pl
+
+logmon_opts="-f $LOGMON_CONF"
+
+check_start() {
+    $0 status > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "Success."
+        exit 0
+    fi 
+    echo "Failed."
+    exit 1
+}
+
+case "$1" in
+    start)
+        $0 status > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            echo "logmon is alredy running."
+            exit 1
+        fi 
+        echo -n $"Starting logmon: "
+        $LOGMON_BIN $logmon_opts >/dev/null 2>&1 &
+        sleep 1
+        check_start
+        ;;
+    stop)
+        echo -n "Stopping logmon: "
+        pkill -TERM -of $LOGMON_BIN 
+        echo Done.
+        ;;
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+    switch)
+        pkill -HUP -of $LOGMON_BIN
+        ;;
+    check)
+        $LOGMON_BIN -c $logmon_opts
+        ;;
+    status)
+        pid=`pgrep -of $LOGMON_BIN`
+        if [ -n "$pid" ]; then
+            echo "logmon (pid $pid) is running..."
+            exit 0
+        fi
+        echo "logmon is stopped"
+        exit 3
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|switch|status|check}"
+        exit 1
+esac
+
